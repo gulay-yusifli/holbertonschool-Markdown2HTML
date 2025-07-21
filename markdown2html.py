@@ -30,9 +30,7 @@ def apply_inline_formatting(line):
     Apply inline bold (**text**) and emphasis (__text__) formatting.
     Assumes well-formed syntax.
     """
-    # Bold: **text**
     line = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', line)
-    # Emphasis: __text__
     line = re.sub(r'__(.+?)__', r'<em>\1</em>', line)
     return line
 
@@ -58,8 +56,8 @@ def convert_markdown_to_html(input_file, output_file):
         stripped = line.strip()
 
         # Close paragraph before handling other blocks
-        if stripped.startswith('#') or stripped.startswith('- ') or \
-           stripped.startswith('* ') or stripped == '':
+        if (stripped.startswith('#') or stripped.startswith('- ') or
+                stripped.startswith('* ') or stripped == ''):
             if in_paragraph:
                 output_lines.append('<p>')
                 for i, pline in enumerate(paragraph_lines):
@@ -81,7 +79,9 @@ def convert_markdown_to_html(input_file, output_file):
                     output_lines.append('</ol>')
                     in_ol = False
                 content = stripped[level:].strip()
-                output_lines.append(f"<h{level}>{apply_inline_formatting(content)}</h{level}>")
+                output_lines.append(
+                    f"<h{level}>{apply_inline_formatting(content)}</h{level}>"
+                )
                 continue
 
         # Unordered list item (- ...)
