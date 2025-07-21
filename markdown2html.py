@@ -1,17 +1,18 @@
 #!/usr/bin/python3
-
+'''
+converts markdown to HTML file.
+'''
 import sys
 import os
 
-def main():
-    with open("README.html", "w") as output:
-        with open(sys.argv[1], 'r') as file:
-            for l in file.readlines():
-                num = l.count('#')
-                text = l.replace("#", "")[1:-1]
-                new_line = f"<h{num}>{text}</h{num}>"
-                output.write(new_line + "\n")
+if len(sys.argv) < 3:
+    print("Usage: ./markdown2html.py README.md README.html", file=sys.stderr)
+    sys.exit(1)
 
+input_file = sys.argv[1]
 
-if __name__ == "__main__":
-    main()
+if not os.path.isfile(input_file):
+    print(f"Missing {input_file}", file=sys.stderr)
+    sys.exit(1)
+
+sys.exit(0)
