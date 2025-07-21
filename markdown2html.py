@@ -2,11 +2,13 @@
 """
 markdown2html.py
 
-A script that converts Markdown to HTML:
-- Headings (#, ##, ..., ######)
+Converts Markdown to HTML:
+- Headings (#)
 - Unordered lists (-)
 - Ordered lists (*)
-- Paragraphs (single or multiline)
+- Paragraphs
+- Bold (**...**) → <b>
+- Emphasis (__...__) → <em>
 
 Usage:
     ./markdown2html.py README.md README.html
@@ -14,6 +16,7 @@ Usage:
 
 import sys
 import os
+import re
 
 
 def print_usage_and_exit():
@@ -22,9 +25,21 @@ def print_usage_and_exit():
     sys.exit(1)
 
 
+def apply_inline_formatting(line):
+    """
+    Apply inline bold (**text**) and emphasis (__text__) formatting.
+    Assumes well-formed syntax.
+    """
+    # Bold: **text**
+    line = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', line)
+    # Emphasis: __text__
+    line = re.sub(r'__(.+?)__', r'<em>\1</em>', line)
+    return line
+
+
 def convert_markdown_to_html(input_file, output_file):
     """
-    Convert markdown to HTML: headings, unordered/ordered lists, paragraphs.
+    Convert markdown to HTML: headings, lists, paragraphs, inline formatting.
     """
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
@@ -42,7 +57,7 @@ def convert_markdown_to_html(input_file, output_file):
     for line in lines:
         stripped = line.strip()
 
-        # Close paragraph before handling other block types
+        # Close paragraph before handling other blocks
         if stripped.startswith('#') or stripped.startswith('- ') or \
            stripped.startswith('* ') or stripped == '':
             if in_paragraph:
@@ -50,7 +65,7 @@ def convert_markdown_to_html(input_file, output_file):
                 for i, pline in enumerate(paragraph_lines):
                     if i > 0:
                         output_lines.append('<br/>')
-                    output_lines.append(pline)
+                    output_lines.append(apply_inline_formatting(pline))
                 output_lines.append('</p>')
                 paragraph_lines = []
                 in_paragraph = False
@@ -66,10 +81,10 @@ def convert_markdown_to_html(input_file, output_file):
                     output_lines.append('</ol>')
                     in_ol = False
                 content = stripped[level:].strip()
-                output_lines.append(f"<h{level}>{content}</h{level}>")
+                output_lines.append(f"<h{level}>{apply_inline_formatting(content)}</h{level}>")
                 continue
 
-        # Unordered list
+        # Unordered list item (- ...)
         if stripped.startswith('- '):
             if in_ol:
                 output_lines.append('</ol>')
@@ -78,10 +93,10 @@ def convert_markdown_to_html(input_file, output_file):
                 output_lines.append('<ul>')
                 in_ul = True
             content = stripped[2:].strip()
-            output_lines.append(f"<li>{content}</li>")
+            output_lines.append(f"<li>{apply_inline_formatting(content)}</li>")
             continue
 
-        # Ordered list
+        # Ordered list item (* ...)
         if stripped.startswith('* '):
             if in_ul:
                 output_lines.append('</ul>')
@@ -90,10 +105,10 @@ def convert_markdown_to_html(input_file, output_file):
                 output_lines.append('<ol>')
                 in_ol = True
             content = stripped[2:].strip()
-            output_lines.append(f"<li>{content}</li>")
+            output_lines.append(f"<li>{apply_inline_formatting(content)}</li>")
             continue
 
-        # Blank line — close any open lists
+        # Blank line
         if stripped == '':
             if in_ul:
                 output_lines.append('</ul>')
@@ -107,7 +122,7 @@ def convert_markdown_to_html(input_file, output_file):
         paragraph_lines.append(stripped)
         in_paragraph = True
 
-    # Final cleanup: close any still-open tags
+    # Final cleanup
     if in_ul:
         output_lines.append('</ul>')
     if in_ol:
@@ -117,7 +132,7 @@ def convert_markdown_to_html(input_file, output_file):
         for i, pline in enumerate(paragraph_lines):
             if i > 0:
                 output_lines.append('<br/>')
-            output_lines.append(pline)
+            output_lines.append(apply_inline_formatting(pline))
         output_lines.append('</p>')
 
     try:
