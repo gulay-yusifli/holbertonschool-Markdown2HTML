@@ -2,8 +2,8 @@
 """
 markdown2html.py
 
-A script that converts Markdown headings (# to ######)
-and unordered lists (-) into corresponding HTML tags.
+A script that converts Markdown headings, unordered (-),
+and ordered (*) lists into corresponding HTML.
 
 Usage:
     ./markdown2html.py README.md README.html
@@ -21,8 +21,7 @@ def print_usage_and_exit():
 
 def convert_markdown_to_html(input_file, output_file):
     """
-    Convert markdown headings and unordered lists to HTML.
-    Writes result to the output file.
+    Convert markdown to HTML: headings, unordered (-) and ordered (*) lists.
     """
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
@@ -32,39 +31,64 @@ def convert_markdown_to_html(input_file, output_file):
         sys.exit(1)
 
     output_lines = []
-    in_list = False
+    in_ul = False
+    in_ol = False
 
     for line in lines:
         stripped = line.strip()
 
-        # Heading
+        # Headings
         if stripped.startswith('#'):
             level = len(stripped) - len(stripped.lstrip('#'))
             if 1 <= level <= 6 and stripped[level:level + 1] == ' ':
-                if in_list:
+                if in_ul:
                     output_lines.append('</ul>')
-                    in_list = False
+                    in_ul = False
+                if in_ol:
+                    output_lines.append('</ol>')
+                    in_ol = False
                 content = stripped[level:].strip()
                 output_lines.append(f"<h{level}>{content}</h{level}>")
                 continue
 
-        # Unordered list item
+        # Unordered list item (-)
         if stripped.startswith('- '):
-            if not in_list:
+            if in_ol:
+                output_lines.append('</ol>')
+                in_ol = False
+            if not in_ul:
                 output_lines.append('<ul>')
-                in_list = True
+                in_ul = True
             content = stripped[2:].strip()
             output_lines.append(f"<li>{content}</li>")
             continue
 
-        # End list if needed
-        if in_list and stripped == '':
-            output_lines.append('</ul>')
-            in_list = False
+        # Ordered list item (*)
+        if stripped.startswith('* '):
+            if in_ul:
+                output_lines.append('</ul>')
+                in_ul = False
+            if not in_ol:
+                output_lines.append('<ol>')
+                in_ol = True
+            content = stripped[2:].strip()
+            output_lines.append(f"<li>{content}</li>")
             continue
 
-    if in_list:
+        # Blank line closes lists
+        if stripped == '':
+            if in_ul:
+                output_lines.append('</ul>')
+                in_ul = False
+            if in_ol:
+                output_lines.append('</ol>')
+                in_ol = False
+
+    # Close any open list at end of file
+    if in_ul:
         output_lines.append('</ul>')
+    if in_ol:
+        output_lines.append('</ol>')
 
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
