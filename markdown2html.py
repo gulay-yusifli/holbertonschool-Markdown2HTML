@@ -2,8 +2,11 @@
 """
 markdown2html.py
 
-A script that converts Markdown headings, unordered (-),
-and ordered (*) lists into corresponding HTML.
+A script that converts Markdown to HTML:
+- Headings (#, ##, ..., ######)
+- Unordered lists (-)
+- Ordered lists (*)
+- Paragraphs (single or multiline)
 
 Usage:
     ./markdown2html.py README.md README.html
@@ -21,7 +24,7 @@ def print_usage_and_exit():
 
 def convert_markdown_to_html(input_file, output_file):
     """
-    Convert markdown to HTML: headings, unordered (-) and ordered (*) lists.
+    Convert markdown to HTML: headings, unordered/ordered lists, paragraphs.
     """
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
@@ -33,9 +36,24 @@ def convert_markdown_to_html(input_file, output_file):
     output_lines = []
     in_ul = False
     in_ol = False
+    in_paragraph = False
+    paragraph_lines = []
 
     for line in lines:
         stripped = line.strip()
+
+        # Close paragraph before handling other block types
+        if stripped.startswith('#') or stripped.startswith('- ') or \
+           stripped.startswith('* ') or stripped == '':
+            if in_paragraph:
+                output_lines.append('<p>')
+                for i, pline in enumerate(paragraph_lines):
+                    if i > 0:
+                        output_lines.append('<br/>')
+                    output_lines.append(pline)
+                output_lines.append('</p>')
+                paragraph_lines = []
+                in_paragraph = False
 
         # Headings
         if stripped.startswith('#'):
@@ -51,7 +69,7 @@ def convert_markdown_to_html(input_file, output_file):
                 output_lines.append(f"<h{level}>{content}</h{level}>")
                 continue
 
-        # Unordered list item (-)
+        # Unordered list
         if stripped.startswith('- '):
             if in_ol:
                 output_lines.append('</ol>')
@@ -63,7 +81,7 @@ def convert_markdown_to_html(input_file, output_file):
             output_lines.append(f"<li>{content}</li>")
             continue
 
-        # Ordered list item (*)
+        # Ordered list
         if stripped.startswith('* '):
             if in_ul:
                 output_lines.append('</ul>')
@@ -75,7 +93,7 @@ def convert_markdown_to_html(input_file, output_file):
             output_lines.append(f"<li>{content}</li>")
             continue
 
-        # Blank line closes lists
+        # Blank line — close any open lists
         if stripped == '':
             if in_ul:
                 output_lines.append('</ul>')
@@ -83,12 +101,24 @@ def convert_markdown_to_html(input_file, output_file):
             if in_ol:
                 output_lines.append('</ol>')
                 in_ol = False
+            continue
 
-    # Close any open list at end of file
+        # Paragraph content
+        paragraph_lines.append(stripped)
+        in_paragraph = True
+
+    # Final cleanup: close any still-open tags
     if in_ul:
         output_lines.append('</ul>')
     if in_ol:
         output_lines.append('</ol>')
+    if in_paragraph:
+        output_lines.append('<p>')
+        for i, pline in enumerate(paragraph_lines):
+            if i > 0:
+                output_lines.append('<br/>')
+            output_lines.append(pline)
+        output_lines.append('</p>')
 
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
