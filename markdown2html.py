@@ -1,9 +1,22 @@
 #!/usr/bin/python3
-'''
-This project converts markdown to HTML
-'''
-import sys
+"""
+markdown2html.py
 
-if len(sys.argv) == 1:
+Convert a markdown file to HTML format.
+
+Usage:
+  ./markdown2html.py input.md output.html
+"""
+import sys
+import os
+
+def print_usage_and_exit():
     print("Usage: ./markdown2html.py README.md README.html")
     sys.exit(1)
+
+def markdown_to_html(md_text):
+    # Simple dummy converter: wrap lines in <p> tags
+    # Replace this with a proper markdown parser if desired.
+    lines = md_text.strip().splitlines()
+    html_lines = [f"<p>{line}</p>" for line in lines if line.strip()]
+    return "\n".join(html_lines)
