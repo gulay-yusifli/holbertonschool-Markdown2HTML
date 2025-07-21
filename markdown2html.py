@@ -37,20 +37,15 @@ def apply_inline_formatting(line):
     - ((text)) → remove all 'c' or 'C' from text
     """
 
-    # Bold: **text**
     line = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', line)
-
-    # Emphasis: __text__
     line = re.sub(r'__(.+?)__', r'<em>\1</em>', line)
 
-    # ((text)) → remove 'c' or 'C' from text
     def remove_c(match):
         content = match.group(1)
         return re.sub(r'[cC]', '', content)
 
     line = re.sub(r'\(\((.+?)\)\)', remove_c, line)
 
-    # [[text]] → md5 hash of text (lowercase)
     def md5_hash(match):
         content = match.group(1)
         h = hashlib.md5(content.encode('utf-8')).hexdigest()
@@ -62,9 +57,8 @@ def apply_inline_formatting(line):
 
 
 def convert_markdown_to_html(input_file, output_file):
-    """
-    Convert markdown to HTML: headings, lists, paragraphs, inline formatting.
-    """
+    """Convert markdown file content to HTML format."""
+
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
             lines = f.readlines()
@@ -81,7 +75,6 @@ def convert_markdown_to_html(input_file, output_file):
     for line in lines:
         stripped = line.strip()
 
-        # Close paragraph before handling other blocks
         if (stripped.startswith('#') or stripped.startswith('- ') or
                 stripped.startswith('* ') or stripped == ''):
             if in_paragraph:
@@ -94,7 +87,6 @@ def convert_markdown_to_html(input_file, output_file):
                 paragraph_lines = []
                 in_paragraph = False
 
-        # Headings
         if stripped.startswith('#'):
             level = len(stripped) - len(stripped.lstrip('#'))
             if 1 <= level <= 6 and stripped[level:level + 1] == ' ':
@@ -110,7 +102,6 @@ def convert_markdown_to_html(input_file, output_file):
                 )
                 continue
 
-        # Unordered list item (- ...)
         if stripped.startswith('- '):
             if in_ol:
                 output_lines.append('</ol>')
@@ -122,7 +113,6 @@ def convert_markdown_to_html(input_file, output_file):
             output_lines.append(f"<li>{apply_inline_formatting(content)}</li>")
             continue
 
-        # Ordered list item (* ...)
         if stripped.startswith('* '):
             if in_ul:
                 output_lines.append('</ul>')
@@ -134,7 +124,6 @@ def convert_markdown_to_html(input_file, output_file):
             output_lines.append(f"<li>{apply_inline_formatting(content)}</li>")
             continue
 
-        # Blank line
         if stripped == '':
             if in_ul:
                 output_lines.append('</ul>')
@@ -144,11 +133,9 @@ def convert_markdown_to_html(input_file, output_file):
                 in_ol = False
             continue
 
-        # Paragraph content
         paragraph_lines.append(stripped)
         in_paragraph = True
 
-    # Final cleanup
     if in_ul:
         output_lines.append('</ul>')
     if in_ol:
@@ -171,9 +158,9 @@ def convert_markdown_to_html(input_file, output_file):
 
 def main():
     """Main execution logic."""
+
     if len(sys.argv) < 3:
-        print("Usage: ./markdown2html.py README.md README.html", file=sys.stderr)
-        sys.exit(1)
+        print_usage_and_exit()
 
     input_file = sys.argv[1]
     output_file = sys.argv[2]
