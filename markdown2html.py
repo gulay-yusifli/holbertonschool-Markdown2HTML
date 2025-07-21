@@ -1,12 +1,8 @@
 #!/usr/bin/python3
-"""
-markdown2html.py
+'''
+This file is made to parse some Markdown to HTML 
 
-Convert a markdown file to HTML format.
-
-Usage:
-  ./markdown2html.py input.md output.html
-"""
+'''
 
 import sys
 import os
