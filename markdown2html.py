@@ -9,6 +9,8 @@ Converts Markdown to HTML:
 - Paragraphs
 - Bold (**...**) → <b>
 - Emphasis (__...__) → <em>
+- [[text]] → md5(text)
+- ((text)) → remove 'c' or 'C' from text
 
 Usage:
     ./markdown2html.py README.md README.html
@@ -17,6 +19,7 @@ Usage:
 import sys
 import os
 import re
+import hashlib
 
 
 def print_usage_and_exit():
@@ -27,11 +30,34 @@ def print_usage_and_exit():
 
 def apply_inline_formatting(line):
     """
-    Apply inline bold (**text**) and emphasis (__text__) formatting.
-    Assumes well-formed syntax.
+    Apply inline formatting:
+    - bold (**text**) → <b>
+    - emphasis (__text__) → <em>
+    - [[text]] → md5 hash of text
+    - ((text)) → remove all 'c' or 'C' from text
     """
+
+    # Bold: **text**
     line = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', line)
+
+    # Emphasis: __text__
     line = re.sub(r'__(.+?)__', r'<em>\1</em>', line)
+
+    # ((text)) → remove 'c' or 'C' from text
+    def remove_c(match):
+        content = match.group(1)
+        return re.sub(r'[cC]', '', content)
+
+    line = re.sub(r'\(\((.+?)\)\)', remove_c, line)
+
+    # [[text]] → md5 hash of text (lowercase)
+    def md5_hash(match):
+        content = match.group(1)
+        h = hashlib.md5(content.encode('utf-8')).hexdigest()
+        return h
+
+    line = re.sub(r'\[\[(.+?)\]\]', md5_hash, line)
+
     return line
 
 
@@ -146,7 +172,8 @@ def convert_markdown_to_html(input_file, output_file):
 def main():
     """Main execution logic."""
     if len(sys.argv) < 3:
-        print_usage_and_exit()
+        print("Usage: ./markdown2html.py README.md README.html", file=sys.stderr)
+        sys.exit(1)
 
     input_file = sys.argv[1]
     output_file = sys.argv[2]
