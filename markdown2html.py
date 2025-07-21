@@ -2,7 +2,8 @@
 """
 markdown2html.py
 
-A script that converts Markdown headings (# to ######) into HTML tags.
+A script that converts Markdown headings (# to ######)
+and unordered lists (-) into corresponding HTML tags.
 
 Usage:
     ./markdown2html.py README.md README.html
@@ -20,8 +21,8 @@ def print_usage_and_exit():
 
 def convert_markdown_to_html(input_file, output_file):
     """
-    Read the input file, convert Markdown headings to HTML,
-    and write the output to the output file.
+    Convert markdown headings and unordered lists to HTML.
+    Writes result to the output file.
     """
     try:
         with open(input_file, 'r', encoding='utf-8') as f:
@@ -31,16 +32,39 @@ def convert_markdown_to_html(input_file, output_file):
         sys.exit(1)
 
     output_lines = []
+    in_list = False
+
     for line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith("#"):
+        stripped = line.strip()
+
+        # Heading
+        if stripped.startswith('#'):
             level = len(stripped) - len(stripped.lstrip('#'))
             if 1 <= level <= 6 and stripped[level:level + 1] == ' ':
+                if in_list:
+                    output_lines.append('</ul>')
+                    in_list = False
                 content = stripped[level:].strip()
-                html_line = f"<h{level}>{content}</h{level}>"
-                output_lines.append(html_line)
+                output_lines.append(f"<h{level}>{content}</h{level}>")
                 continue
-        output_lines.append(line.rstrip())
+
+        # Unordered list item
+        if stripped.startswith('- '):
+            if not in_list:
+                output_lines.append('<ul>')
+                in_list = True
+            content = stripped[2:].strip()
+            output_lines.append(f"<li>{content}</li>")
+            continue
+
+        # End list if needed
+        if in_list and stripped == '':
+            output_lines.append('</ul>')
+            in_list = False
+            continue
+
+    if in_list:
+        output_lines.append('</ul>')
 
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
