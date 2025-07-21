@@ -7,6 +7,10 @@ Convert a markdown file to HTML format.
 Usage:
   ./markdown2html.py input.md output.html
 """
-import sysif len(sys.argv) < 3:
+
+import sys
+import os
+
+def print_usage_and_exit():
     print("Usage: ./markdown2html.py README.md README.html")
-    exit(1)
+    sys.exit(1)
